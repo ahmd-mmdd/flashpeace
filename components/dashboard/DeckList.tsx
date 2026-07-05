@@ -3,9 +3,13 @@ import DeckCard from "./DeckCard";
 
 type DeckListProps = {
   decks: Deck[];
+  onDelete: (id: string) => void;
 };
 
-export default function DeckList({ decks }: DeckListProps) {
+export default function DeckList({
+  decks,
+  onDelete,
+}: DeckListProps) {
   if (decks.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center">
@@ -26,6 +30,7 @@ export default function DeckList({ decks }: DeckListProps) {
         <DeckCard
           key={deck.id}
           deck={deck}
+          onDelete={onDelete}
         />
       ))}
     </div>

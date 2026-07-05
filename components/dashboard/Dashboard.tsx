@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Deck } from "@/types/deck";
 import DeckList from "./DeckList";
+import CreateDeckModal from "./CreateDeckModal";
+import Dialog from "@/components/ui/Dialog";
 
 type DashboardProps = {
   username: string;
@@ -18,6 +20,10 @@ export default function Dashboard({ username }: DashboardProps) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deckName, setDeckName] = useState("");
+
+  // State untuk Dialog Delete
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem("flashpeace-decks", JSON.stringify(decks));
@@ -52,6 +58,30 @@ export default function Dashboard({ username }: DashboardProps) {
     setIsModalOpen(false);
   }
 
+  // Saat klik tombol delete
+  function handleDeleteDeck(id: string) {
+    setSelectedDeckId(id);
+    setIsDeleteOpen(true);
+  }
+
+  // Saat klik tombol Delete di dialog
+  function confirmDeleteDeck() {
+    if (!selectedDeckId) return;
+
+    setDecks((prevDecks) =>
+      prevDecks.filter((deck) => deck.id !== selectedDeckId)
+    );
+
+    setSelectedDeckId(null);
+    setIsDeleteOpen(false);
+  }
+
+  // Saat klik Cancel atau tombol X
+  function cancelDeleteDeck() {
+    setSelectedDeckId(null);
+    setIsDeleteOpen(false);
+  }
+
   function handleCloseModal() {
     setDeckName("");
     setIsModalOpen(false);
@@ -84,53 +114,30 @@ export default function Dashboard({ username }: DashboardProps) {
         </div>
 
         <div className="mt-4">
-          <DeckList decks={decks} />
+          <DeckList
+            decks={decks}
+            onDelete={handleDeleteDeck}
+          />
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold">
-              Create New Deck
-            </h2>
+      <CreateDeckModal
+        isOpen={isModalOpen}
+        deckName={deckName}
+        setDeckName={setDeckName}
+        onClose={handleCloseModal}
+        onCreate={handleCreateDeck}
+      />
 
-            <p className="mt-2 text-sm text-gray-500">
-              Masukkan nama deck yang ingin dibuat.
-            </p>
-
-            <input
-              type="text"
-              placeholder="Contoh: English Vocabulary"
-              value={deckName}
-              onChange={(e) => setDeckName(e.target.value)}
-              className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-indigo-500"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleCreateDeck();
-                }
-              }}
-              autoFocus
-            />
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={handleCloseModal}
-                className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleCreateDeck}
-                className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700"
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        isOpen={isDeleteOpen}
+        title="Delete Deck"
+        description="Apakah kamu yakin ingin menghapus deck ini?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteDeck}
+        onCancel={cancelDeleteDeck}
+      />
     </div>
   );
 }
