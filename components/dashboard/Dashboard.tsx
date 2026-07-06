@@ -5,6 +5,7 @@ import { Deck } from "@/types/deck";
 import DeckList from "./DeckList";
 import CreateDeckModal from "./CreateDeckModal";
 import Dialog from "@/components/ui/Dialog";
+import Toast from "@/components/ui/Toast";
 
 type DashboardProps = {
   username: string;
@@ -21,19 +22,32 @@ export default function Dashboard({ username }: DashboardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deckName, setDeckName] = useState("");
 
-  // State untuk Dialog Delete
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
+
+  // Toast State
+  const [isToastOpen, setIsToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
 
   useEffect(() => {
     localStorage.setItem("flashpeace-decks", JSON.stringify(decks));
   }, [decks]);
 
+  function showToast(
+    message: string,
+    type: "success" | "error"
+  ) {
+    setToastMessage(message);
+    setToastType(type);
+    setIsToastOpen(true);
+  }
+
   function handleCreateDeck() {
     const trimmedName = deckName.trim();
 
     if (!trimmedName) {
-      alert("Nama deck tidak boleh kosong.");
+      showToast("Nama deck tidak boleh kosong.", "error");
       return;
     }
 
@@ -42,41 +56,43 @@ export default function Dashboard({ username }: DashboardProps) {
     );
 
     if (isDuplicate) {
-      alert("Nama deck sudah ada.");
+      showToast("Nama deck sudah ada.", "error");
       return;
     }
 
     const newDeck: Deck = {
-      id: crypto.randomUUID(),
-      name: trimmedName,
-      createdAt: new Date().toISOString(),
-    };
+  id: crypto.randomUUID(),
+  name: trimmedName,
+  createdAt: new Date().toISOString(),
+  cards: [],
+};
 
-    setDecks((prevDecks) => [...prevDecks, newDeck]);
+    setDecks((prev) => [...prev, newDeck]);
 
     setDeckName("");
     setIsModalOpen(false);
+
+    showToast("Deck berhasil dibuat!", "success");
   }
 
-  // Saat klik tombol delete
   function handleDeleteDeck(id: string) {
     setSelectedDeckId(id);
     setIsDeleteOpen(true);
   }
 
-  // Saat klik tombol Delete di dialog
   function confirmDeleteDeck() {
     if (!selectedDeckId) return;
 
-    setDecks((prevDecks) =>
-      prevDecks.filter((deck) => deck.id !== selectedDeckId)
+    setDecks((prev) =>
+      prev.filter((deck) => deck.id !== selectedDeckId)
     );
 
     setSelectedDeckId(null);
     setIsDeleteOpen(false);
+
+    showToast("Deck berhasil dihapus.", "success");
   }
 
-  // Saat klik Cancel atau tombol X
   function cancelDeleteDeck() {
     setSelectedDeckId(null);
     setIsDeleteOpen(false);
@@ -137,6 +153,13 @@ export default function Dashboard({ username }: DashboardProps) {
         cancelText="Cancel"
         onConfirm={confirmDeleteDeck}
         onCancel={cancelDeleteDeck}
+      />
+
+      <Toast
+        isOpen={isToastOpen}
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setIsToastOpen(false)}
       />
     </div>
   );
